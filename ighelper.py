@@ -21,7 +21,8 @@ from pandas import ExcelFile
 from access_token_request import get_access_token
 from api_code import get_api_code
 from ig_requests import get_user_info
-from following_extra import following_extra_users
+
+from self_following_extra import following_extra_users
 
 #class to hold bot functions
 class InstaHelp:
@@ -144,8 +145,9 @@ class InstaHelp:
       #print number of following
       print(len(following))
 
-      # self.driver.execute_script("window.scrollTo(0, window.scrollY + 200);")
-      time.sleep(0.5)
+      element_inside_popup = self.driver.find_element_by_xpath("//div[@class='isgrP']")
+      self.driver.execute_script('arguments[0].scrollTop = arguments[0].scrollTop + arguments[0].offsetHeight;', element_inside_popup)
+      time.sleep(2)
     
     #print final number of followers
     print("final following: " + str(len(following)))
@@ -169,7 +171,7 @@ class InstaHelp:
           print("An exception occurred")
             
       self.driver.execute_script("window.scrollTo(0, window.scrollY + 200);")
-      time.sleep(2)
+      time.sleep(0.5)
 
   def visit_peeps(self, peeps, skip_harvard):
     for peep in peeps:
@@ -191,7 +193,7 @@ if __name__ == '__main__':
   igpy = InstaHelp(IG_USERNAME, IG_PASSWORD)
   
   # login
-  igpy.login()
+  # igpy.login()
 
   # self_followers = igpy.get_user_followers(IG_USERNAME, 772)
   # self_following = igpy.get_user_following(IG_USERNAME, 982)
@@ -201,4 +203,7 @@ if __name__ == '__main__':
   # print(extra_following)
 
   # igpy.visit_peeps(following_extra_users, True)
+
+
+
   

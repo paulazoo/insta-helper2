@@ -102,3 +102,8 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+# other files
+self_following_extra.py
+o_following.py
+o_verified_following.py
