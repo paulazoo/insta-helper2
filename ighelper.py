@@ -20,9 +20,10 @@ from pandas import ExcelFile
 
 from access_token_request import get_access_token
 from api_code import get_api_code
-from ig_requests import get_user_info
+from ig_requests import get_user_info, get_detailed_user_info
 
-from self_following_extra import following_extra_users
+from self_following_extra import self_following_extra_users
+from self_following import self_following_users
 
 #class to hold bot functions
 class InstaHelp:
@@ -73,7 +74,7 @@ class InstaHelp:
     #find and click login button as first element with text "Log In" in div (insepct element)
     self.driver.find_elements_by_xpath("//div[contains(text(), 'Log In')]")[0].click()
     #time to load
-    time.sleep(2)
+    time.sleep(3)
     print('logged in')
     try:
       self.driver.find_element_by_xpath("//button[@class='aOOlW   HoLwm ']").click()
@@ -95,12 +96,6 @@ class InstaHelp:
       is_harvard = True
 
     return user_info, is_harvard
-
-  def get_detailed_user(self, username):
-    self.driver.get('https://www.instagram.com/'+username+'/?__a=1')
-    whole_page_text = self.driver.page_source
-
-    print(whole_page_text)
 
   def get_user_followers(self, username, follower_count):
     time.sleep(2)
@@ -184,6 +179,45 @@ class InstaHelp:
         time.sleep(5)
         self.driver.get('https://www.instagram.com/'+peep+'/')
 
+  def get_cookies(self):
+    cookie_dict = {}
+    cookie_dict['ig_did'] = self.driver.get_cookie("ig_did")["value"]
+    cookie_dict['ig_nrcb'] = self.driver.get_cookie("ig_nrcb")["value"]
+    cookie_dict['mid'] = self.driver.get_cookie("mid")["value"]
+    cookie_dict['csrftoken'] = self.driver.get_cookie("csrftoken")["value"]
+    cookie_dict['ds_user_id'] = self.driver.get_cookie("ds_user_id")["value"]
+    cookie_dict['sessionid'] = self.driver.get_cookie("sessionid")["value"]
+    cookie_dict['shbid'] = self.driver.get_cookie("shbid")["value"]
+    cookie_dict['shbts'] = self.driver.get_cookie("shbts")["value"]
+    cookie_dict['rur'] = self.driver.get_cookie("rur")["value"]
+    cookie_dict['urlgen'] = self.driver.get_cookie("urlgen")["value"]
+
+    return cookie_dict
+  
+  def get_detailed_user(self, username, cookies):
+    detailed_user_info = get_detailed_user_info(username, cookies)
+
+    return detailed_user_info
+
+  def get_most_recent_pic(self, detailed_user_info):
+    pic = detailed_user_info["edge_owner_to_timeline_media"]["edges"][0]["node"]
+    pic_timestamp = pic["taken_at_timestamp"]
+    pic_url = pic["shortcode"]
+
+    return pic_url, pic_timestamp
+
+  def like_pic(self, pic_url):
+    self.driver.get('https://www.instagram.com/p/'+pic_url+'/')
+    time.sleep(2)
+    
+    like_span_el = self.driver.find_element_by_xpath("//span[@class='fr66n']")
+
+    like_svg_aria_label =  like_span_el.find_element_by_xpath(".//*[name()='svg']").get_attribute("aria-label")
+    
+    if like_svg_aria_label == "Like":
+      like_span_el.find_element_by_xpath(".//button[@class='wpO6b ']").click()
+      time.sleep(2)
+
 
 if __name__ == '__main__':
   load_dotenv()
@@ -191,19 +225,45 @@ if __name__ == '__main__':
   IG_USERNAME = os.getenv('IG_USERNAME')
 
   igpy = InstaHelp(IG_USERNAME, IG_PASSWORD)
-  
+
   # login
-  # igpy.login()
+  igpy.login()
 
-  # self_followers = igpy.get_user_followers(IG_USERNAME, 772)
-  # self_following = igpy.get_user_following(IG_USERNAME, 982)
+  '''
+  checkout extra following
+  '''
+  cookies = igpy.get_cookies()
 
-  # extra_following = list(set(self_following) - set(self_followers))
+  with open('cookie_storage.txt', 'w') as f:
+    str_cookie = str(cookies)
+    f.write(str_cookie)
 
-  # print(extra_following)
+  extra_following = []
+  ignore_extra_following = []
+  for peep in self_following_users:
+    try:
+      detailed_user_info = igpy.get_detailed_user(peep, cookies)
+      if peep not in ignore_extra_following and detailed_user_info["follows_viewer"] == False:
+        extra_following.append(peep)
+    except:
+      print(peep)
 
-  # igpy.visit_peeps(following_extra_users, True)
+  with open('self_following_extra.txt', 'w') as f:
+    for i in extra_following:
+        f.write("%s\n" % i)
 
+  '''
+  like followers' most recent pics
+  '''
+  # cookies = igpy.get_cookies()
 
-
+  # for peep in self_followers:
+    # detailed_user_info = igpy.get_detailed_user(peep, cookies)
+    # pic_url, pic_timestamp = igpy.get_most_recent_pic(detailed_user_info)
   
+    # 24 hours
+    # timestamp = time.time() - 86400
+    
+    # if pic_timestamp > timestamp: 
+    #   # igpy.like_pic(pic_url)
+

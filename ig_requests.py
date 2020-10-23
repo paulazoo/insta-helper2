@@ -13,3 +13,22 @@ def get_user_info(username):
 
   res = json.loads(response.text)
   return res['graphql']['user']
+
+def get_detailed_user_info(username, cookies):
+  url = "https://www.instagram.com/"+username+"/?__a=1"
+
+  payload = {}
+  headers = {
+    'Cookie': 'ig_did='+cookies['ig_did']+'; \
+      mid='+cookies['mid']+'; datr=dqLJXsXTUUdA4iOXTTldaIj-; \
+        shbid='+cookies['shbid']+'; shbts='+cookies['shbts']+'; ig_nrcb='+cookies['ig_nrcb']+'; \
+          csrftoken='+cookies['csrftoken']+'; ds_user_id='+cookies['ds_user_id']+'; \
+            sessionid='+cookies['sessionid']+'; rur='+cookies['rur']+'; \
+              urlgen='+cookies['urlgen']+'; '
+  }
+
+  response = requests.request("GET", url, headers=headers, data = payload)
+
+  res = json.loads(response.text)
+  print(res)
+  return res
